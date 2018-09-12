@@ -1,0 +1,13 @@
+name: boshfind
+version: 0.1.0
+
+authors:
+  - Toby Lorne <toby@toby.codes>
+
+targets:
+  boshfind:
+    main: src/boshfind.cr
+
+crystal: 0.25.1
+
+license: MIT
