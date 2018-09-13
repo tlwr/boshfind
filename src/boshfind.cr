@@ -27,7 +27,7 @@ module Boshfind
       .map { |subpath| parse_subpath(subpath) }
   end
 
-  def self.traverse_array(tree, subpath)
+  def self.traverse(tree, subpath : ArrayIndex)
     return nil if tree.size.zero?
 
     if subpath < 0
@@ -37,7 +37,18 @@ module Boshfind
       return nil if tree[subpath].nil?
     end
 
-    return tree[subpath]
+    tree[subpath]
+  end
+
+  def self.traverse(tree, subpath : HashKey)
+    tree[subpath]? ? tree[subpath] : nil
+  end
+
+  def self.traverse(tree, subpath : ItemWithKeyValue)
+    return nil unless tree.raw.is_a? Array
+    key, value = subpath
+    matches = tree.as_a.select { |i| i[key] && i[key].to_s == value }
+    matches.empty? ? nil : matches.first
   end
 
   def self.find(contents, path_str)
@@ -48,21 +59,9 @@ module Boshfind
     path.each do |subpath|
       return nil if (tree.raw.is_a? String || tree.raw.is_a? Int32)
 
-      case subpath
-      when ArrayIndex
-        next_val = traverse_array(tree, subpath)
-        return nil if next_val.nil?
-        tree = next_val
-      when HashKey
-        return nil unless tree[subpath]?
-        tree = tree[subpath]
-      when ItemWithKeyValue
-        key, value = subpath
-        return nil unless tree.raw.is_a? Array
-        matches = tree.as_a.select { |i| i[key] && i[key].to_s == value }
-        return nil if matches.empty?
-        tree = matches.first
-      end
+      next_val = traverse(tree, subpath)
+      return nil if next_val.nil?
+      tree = next_val
     end
 
     tree
